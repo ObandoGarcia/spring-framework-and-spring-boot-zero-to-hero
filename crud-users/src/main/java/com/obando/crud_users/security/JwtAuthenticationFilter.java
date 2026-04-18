@@ -15,6 +15,8 @@ import tools.jackson.databind.ObjectMapper;
 
 import javax.crypto.SecretKey;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
@@ -50,6 +52,21 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     protected void successfulAuthentication(HttpServletRequest request,
                                             HttpServletResponse response,
                                             FilterChain chain, Authentication authResult) throws IOException, ServletException {
-        
+        User user = (User) authResult.getPrincipal();
+        String email = user.getEmail();
+        String token = Jwts.builder()
+                .subject(email)
+                .signWith(SECRET_KEY)
+                .compact();
+
+        response.addHeader("Authentication", "Bearer " + token);
+        Map<String, String> body = new HashMap<>();
+        body.put("Token:", token);
+        body.put("Username: ", email);
+        body.put("message:", "You're logged in!");
+
+        response.getWriter().write(new ObjectMapper().writeValueAsString(body));
+        response.setContentType("application/json");
+        response.setStatus(200);
     }
 }
